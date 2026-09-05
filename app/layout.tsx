@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://backyard-ultra-singapore-live.kenkaran.chatgpt.site"),
+  metadataBase: new URL("https://backyard-ultra-singapore-live.onrender.com"),
   title: "Beach Backyard Ultra — Live Team Singapore Coverage",
   description: "Just one more yard. Live yards, lap times, standings and course progress for Team Singapore.",
   openGraph: {

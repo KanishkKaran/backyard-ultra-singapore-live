@@ -92,7 +92,7 @@ export default function Home(){
     <div className="sync-strip"><b>{feed.source==="spreadsheet"?"● LIVE DATA CONNECTED":"● TEST DATA"}</b><span>LAST SYNC {new Date(feed.polledAt).toLocaleTimeString("en-SG",{hour:"2-digit",minute:"2-digit",second:"2-digit"})} SGT · REFRESHES EVERY 20 SECONDS</span></div>
 
     <section className="live-course" id="course">
-      <header><div><p>COURSE / PUNGGOL</p><h2>PACE-BASED<br/><span>TRACKER.</span></h2></div><div className="map-mode"><b>ESTIMATED · NOT GPS</b><span>6.7056 KM · OUT &amp; BACK</span></div></header>
+      <header><div><p>COURSE / PUNGGOL</p><h2>PACE-BASED<br/><span>TRACKER.</span></h2></div><div className="map-mode"><b>ESTIMATED · NOT GPS</b><span>6.75 KM GPX · WAO START + FINISH</span></div></header>
       <figure className="course-visual">
         <EstimatedCourseMap results={results} currentYard={currentYard} now={now}/>
         <figcaption><span>ESTIMATE USES EACH ACTIVE RUNNER&apos;S LAST LAP, OR AVERAGE LAP WHEN LAST LAP IS BLANK.</span><b>PACE CAN CHANGE · THIS IS NOT LIVE GPS</b></figcaption>

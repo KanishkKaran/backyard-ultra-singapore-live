@@ -105,19 +105,18 @@ export function parseLiveFeedCsv(csv:string):{results:LiveResult[];summary:LiveS
   const column=(name:string)=>headers.indexOf(normalize(name));
   const get=(row:string[],name:string)=>{const index=column(name);return index>=0?(row[index]??"").trim():""};
   const sourceRows=rows.slice(headerIndex+1).filter(row=>Number(get(row,"Bib"))>0&&Boolean(get(row,"Athlete")));
-  const fieldCurrentYard=Math.max(0,...sourceRows.map(row=>Number(get(row,"Current Yard"))||0));
   const results=sourceRows.map((row,index)=>{
     const rawStatus=get(row,"Status");
     const currentYard=Number(get(row,"Current Yard"))||0;
-    const inferredStatus:RunnerStatus=currentYard<fieldCurrentYard?"out":"on_course";
-    const canonicalStatus=currentYard<fieldCurrentYard?"out":rawStatus?normalizeStatus(rawStatus):inferredStatus;
-    const explicitExit=rawStatus&&!["oncourse","incorral","active"].includes(normalize(rawStatus));
+    // Status is the race director's source of truth. Current Yard is timing data,
+    // so it must never silently turn an explicitly active runner into an exit.
+    const canonicalStatus:RunnerStatus=rawStatus?normalizeStatus(rawStatus):(currentYard>0?"on_course":"out");
     return {
     athleteId:get(row,"Athlete ID")||`SGP-${String(index+1).padStart(3,"0")}`,
     bib:Number(get(row,"Bib"))||index+1,
     name:get(row,"Athlete"),
     status:canonicalStatus,
-    statusLabel:(currentYard<fieldCurrentYard&&!explicitExit?"OUT":rawStatus.trim().toUpperCase())||({on_course:"ON COURSE",out:"OUT"} as const)[canonicalStatus],
+    statusLabel:rawStatus.trim().toUpperCase()||({on_course:"ON COURSE",out:"OUT"} as const)[canonicalStatus],
     yardsCompleted:Number(get(row,"Yards Completed"))||0,
     currentYard,
     lastLapSeconds:parseDuration(get(row,"Last Lap")),
