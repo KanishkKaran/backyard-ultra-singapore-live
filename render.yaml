@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: backyard-ultra-singapore-live
+    runtime: node
+    region: singapore
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
