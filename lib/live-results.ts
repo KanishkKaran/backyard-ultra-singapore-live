@@ -1,5 +1,10 @@
 export type RunnerStatus = "on_course" | "out";
 
+export type LapSplit = {
+  yard: number;
+  seconds: number;
+};
+
 export type LiveResult = {
   athleteId: string;
   bib: number;
@@ -13,6 +18,7 @@ export type LiveResult = {
   progress: number;
   updatedAt: string;
   note: string;
+  laps: LapSplit[];
 };
 
 export type LiveSummary = {
@@ -43,7 +49,7 @@ const samples: Array<[string,number,string,string,number,number,string,string,nu
 
 export const sampleResults: LiveResult[] = samples.map(([athleteId,bib,name,status,yardsCompleted,currentYard,lastLap,averageLap,progress,updatedAt,note]) => ({
   athleteId,bib,name,status:normalizeStatus(status),statusLabel:status.toUpperCase(),yardsCompleted,currentYard,
-  lastLapSeconds:parseDuration(lastLap),averageLapSeconds:parseDuration(averageLap),progress,updatedAt,note,
+  lastLapSeconds:parseDuration(lastLap),averageLapSeconds:parseDuration(averageLap),progress,updatedAt,note,laps:[],
 }));
 
 function normalize(value:string){return value.trim().toLowerCase().replace(/[^a-z0-9]/g,"");}
@@ -124,6 +130,7 @@ export function parseLiveFeedCsv(csv:string):{results:LiveResult[];summary:LiveS
     progress:Math.max(0,Math.min(100,Number(get(row,"Course Progress %").replace("%",""))*(get(row,"Course Progress %").includes("%")?1:100)||0)),
     updatedAt:get(row,"Updated At")||new Date().toISOString(),
     note:get(row,"Note"),
+    laps:[],
   }});
   const fallback=summarizeResults(results);
   const inlineSummaryRow=sourceRows.find(row=>get(row,"Current Field Yard")||get(row,"Still In")||get(row,"Team Distance (km)"))??[];
@@ -144,6 +151,32 @@ export function parseLiveFeedCsv(csv:string):{results:LiveResult[];summary:LiveS
     averageLapSeconds:averageLapSeconds??fallback.averageLapSeconds,
     averageRestSeconds:averageRestSeconds??fallback.averageRestSeconds,
   }};
+}
+
+export function parseLapLogCsv(csv:string):Record<number,LapSplit[]>{
+  const rows=parseCsvRows(csv);
+  const headerIndex=rows.findIndex(row=>row.some(cell=>normalize(cell)==="bib")&&row.some(cell=>/^yard\d+$/.test(normalize(cell))));
+  if(headerIndex<0) throw new Error("Lap Log header row not found");
+  const headers=rows[headerIndex].map(normalize);
+  const bibColumn=headers.indexOf("bib");
+  const yardColumns=headers.map((header,index)=>{
+    const match=header.match(/^yard(\d+)$/);
+    return match?{index,yard:Number(match[1])}:null;
+  }).filter((value):value is {index:number;yard:number}=>Boolean(value));
+  const lapsByBib:Record<number,LapSplit[]>={};
+  for(const row of rows.slice(headerIndex+1)){
+    const bib=Number(row[bibColumn]);
+    if(!bib) continue;
+    lapsByBib[bib]=yardColumns.flatMap(({index,yard})=>{
+      const seconds=parseDuration((row[index]??"").trim());
+      return seconds&&seconds>0?[{yard,seconds}]:[];
+    });
+  }
+  return lapsByBib;
+}
+
+export function attachLapHistory(results:LiveResult[],lapsByBib:Record<number,LapSplit[]>):LiveResult[]{
+  return results.map(result=>({...result,laps:lapsByBib[result.bib]??[]}));
 }
 
 export function parseLiveResultsCsv(csv:string):LiveResult[]{return parseLiveFeedCsv(csv).results;}
