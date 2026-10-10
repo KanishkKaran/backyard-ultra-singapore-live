@@ -5,6 +5,12 @@ export type LapSplit = {
   seconds: number;
 };
 
+export type LapLogEntry = {
+  status?: RunnerStatus;
+  statusLabel?: string;
+  laps: LapSplit[];
+};
+
 export type LiveResult = {
   athleteId: string;
   bib: number;
@@ -153,30 +159,52 @@ export function parseLiveFeedCsv(csv:string):{results:LiveResult[];summary:LiveS
   }};
 }
 
-export function parseLapLogCsv(csv:string):Record<number,LapSplit[]>{
+export function parseLapLogCsv(csv:string):Record<number,LapLogEntry>{
   const rows=parseCsvRows(csv);
   const headerIndex=rows.findIndex(row=>row.some(cell=>normalize(cell)==="bib")&&row.some(cell=>/^yard\d+$/.test(normalize(cell))));
   if(headerIndex<0) throw new Error("Lap Log header row not found");
   const headers=rows[headerIndex].map(normalize);
   const bibColumn=headers.indexOf("bib");
+  const statusColumn=headers.indexOf("status");
   const yardColumns=headers.map((header,index)=>{
     const match=header.match(/^yard(\d+)$/);
     return match?{index,yard:Number(match[1])}:null;
   }).filter((value):value is {index:number;yard:number}=>Boolean(value));
-  const lapsByBib:Record<number,LapSplit[]>={};
+  const entriesByBib:Record<number,LapLogEntry>={};
   for(const row of rows.slice(headerIndex+1)){
     const bib=Number(row[bibColumn]);
     if(!bib) continue;
-    lapsByBib[bib]=yardColumns.flatMap(({index,yard})=>{
+    const rawStatus=statusColumn>=0?(row[statusColumn]??"").trim():"";
+    const laps=yardColumns.flatMap(({index,yard})=>{
       const seconds=parseDuration((row[index]??"").trim());
       return seconds&&seconds>0?[{yard,seconds}]:[];
     });
+    entriesByBib[bib]={
+      status:rawStatus?normalizeStatus(rawStatus):undefined,
+      statusLabel:rawStatus?rawStatus.toUpperCase():undefined,
+      laps,
+    };
   }
-  return lapsByBib;
+  return entriesByBib;
 }
 
-export function attachLapHistory(results:LiveResult[],lapsByBib:Record<number,LapSplit[]>):LiveResult[]{
-  return results.map(result=>({...result,laps:lapsByBib[result.bib]??[]}));
+export function attachLapHistory(results:LiveResult[],entriesByBib:Record<number,LapLogEntry>):LiveResult[]{
+  return results.map(result=>{
+    const entry=entriesByBib[result.bib];
+    const laps=entry?.laps??[];
+    const lastLap=laps.length?laps.reduce((latest,lap)=>lap.yard>latest.yard?lap:latest):null;
+    const averageLapSeconds=laps.length?Math.round(laps.reduce((sum,lap)=>sum+lap.seconds,0)/laps.length):null;
+    return {
+      ...result,
+      status:entry?.status??result.status,
+      statusLabel:entry?.statusLabel??result.statusLabel,
+      yardsCompleted:laps.length,
+      currentYard:laps.length,
+      lastLapSeconds:lastLap?.seconds??null,
+      averageLapSeconds,
+      laps,
+    };
+  });
 }
 
 export function parseLiveResultsCsv(csv:string):LiveResult[]{return parseLiveFeedCsv(csv).results;}
