@@ -19,7 +19,10 @@ export async function GET(){
     try{
       const [resultsCsv,lapLogCsv]=await Promise.all([fetchCsv(sheetUrl),fetchCsv(lapLogUrl).catch(()=>"")]);
       const feed=parseLiveFeedCsv(resultsCsv);
-      if(lapLogCsv) feed.results=attachLapHistory(feed.results,parseLapLogCsv(lapLogCsv));
+      if(lapLogCsv){
+        feed.results=attachLapHistory(feed.results,parseLapLogCsv(lapLogCsv));
+        feed.summary=summarizeResults(feed.results);
+      }
       if(feed.results.length) return Response.json({source:"spreadsheet",...feed,polledAt:new Date().toISOString()},{headers:{"cache-control":"no-store, max-age=0","x-data-source":"spreadsheet"}});
     }catch(error){console.error("Spreadsheet feed unavailable",error);}
   }
