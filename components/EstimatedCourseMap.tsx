@@ -3,6 +3,7 @@
 import {useState} from "react";
 import type {MouseEvent} from "react";
 import type {LiveResult} from "../lib/live-results";
+import {event} from "../lib/race-data";
 
 type Point={x:number;y:number};
 
@@ -63,8 +64,12 @@ function formatClock(seconds:number){
 export default function EstimatedCourseMap({results,currentYard,now}: {results:LiveResult[];currentYard:number;now:number}){
   const [zoom,setZoom]=useState(1);
   const [zoomOrigin,setZoomOrigin]=useState({x:50,y:50});
-  const active=results.filter(runner=>runner.status==="on_course");
-  const elapsedSeconds=Math.floor((now/1000)%3600);
+  const eventStart=new Date(event.date).getTime();
+  const preRace=now<eventStart;
+  const active=preRace?[]:results.filter(runner=>runner.status==="on_course");
+  const elapsedSeconds=preRace?0:Math.floor((now/1000)%3600);
+  const startSeconds=Math.max(0,Math.ceil((eventStart-now)/1000));
+  const startCountdown=`${String(Math.floor(startSeconds/3600)).padStart(3,"0")}:${String(Math.floor((startSeconds%3600)/60)).padStart(2,"0")}:${String(startSeconds%60).padStart(2,"0")}`;
   const estimates=active.map((runner,index)=>{
     const predictedSeconds=Math.max(1,runner.lastLapSeconds??runner.averageLapSeconds??3600);
     const lapProgress=Math.min(1,elapsedSeconds/predictedSeconds);
@@ -127,7 +132,7 @@ export default function EstimatedCourseMap({results,currentYard,now}: {results:L
     <div className="estimated-map__hud">
       <span><i/> PACE ESTIMATE</span>
       <strong>YARD {String(currentYard).padStart(2,"0")}</strong>
-      <b>{formatClock(elapsedSeconds)} <small>FROM BELL</small></b>
+      <b>{preRace?startCountdown:formatClock(elapsedSeconds)} <small>{preRace?"TO START":"FROM BELL"}</small></b>
       <em>{active.length} ACTIVE MARKERS</em>
     </div>
     <div className="estimated-map__method"><b>ONE COMPLETE YARD · START + FINISH AT WAO</b><span>Actual BBU 2026 GPX · 6.75 km · Tap the map to zoom</span></div>

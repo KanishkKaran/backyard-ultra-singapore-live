@@ -101,3 +101,10 @@
 .open-field-section .team-card{background:#0e110c}
 @media(max-width:1000px){.topbar{grid-template-columns:1fr auto auto;gap:12px}.open-category-strip{grid-template-columns:1fr 1fr}.open-category-strip article:nth-child(2){border-right:0}.open-category-strip article:nth-child(n+3){border-top:1px solid var(--line)}}
 @media(max-width:650px){.topbar{height:auto;padding:7px 14px;grid-template-columns:1fr auto}.category-switch{grid-column:1/-1;grid-row:2;width:100%;margin-bottom:4px}.category-switch a{flex:1;text-align:center}.open-category-strip{grid-template-columns:1fr}.open-category-strip article{min-height:105px;border-right:0}.open-category-strip article:nth-child(n+2){border-top:1px solid var(--line)}.open-roster-note{margin-top:25px}.open-map-notice{top:58%;padding:16px}.open-map-notice span{font-size:12px}}
+
+/* Pre-race layout: one team view, with an hour-level countdown until the first bell. */
+.topbar{grid-template-columns:1fr auto}
+.bell-time.pre-race{grid-template-columns:1fr}
+.bell-time.pre-race b{grid-row:auto;grid-column:auto;margin-top:5px;font-size:clamp(30px,3.4vw,46px);letter-spacing:.01em}
+.bell-time.pre-race em{color:var(--green)}
+@media(max-width:1000px){.topbar{grid-template-columns:1fr auto}}

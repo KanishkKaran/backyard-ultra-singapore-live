@@ -12,7 +12,7 @@ export const event={
 export const team:Runner[]=[
  {number:1,name:"Joshua Toh",photo:"/athletes/joshua-toh.jpg",photoPosition:"50% 35%"},
  {number:2,name:"Nguyen Dang Trung",photo:"/athletes/nguyen-dang-trung.jpg",photoPosition:"50% 35%"},
- {number:3,name:"Ned Phillips",photo:"/athletes/ned-phillips.jpg",photoPosition:"50% 36%",champion:true},
+ {number:3,name:"Wang Jian Jason",photo:"/athletes/wang-jian-jason.jpg",photoPosition:"50% 48%"},
  {number:4,name:"Chris Timms",photo:"/athletes/chris-timms.jpg",photoPosition:"50% 34%"},
  {number:5,name:"Andrey Kolbasov",photo:"/athletes/andrey-kolbasov.jpg",photoPosition:"50% 30%"},
  {number:6,name:"Khoo Houw Ann",photo:"/athletes/khoo-houw-ann.jpg",photoPosition:"50% 38%"},

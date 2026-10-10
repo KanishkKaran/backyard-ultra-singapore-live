@@ -11,7 +11,7 @@ type Filter="all"|RunnerStatus;
 type SortKey="standing"|"name"|"yards"|"last"|"average"|"rest";
 
 const statusPriority:Record<RunnerStatus,number>={on_course:0,out:1};
-const sampleComments=["Joshua feels he can go strong.","Kanishk had a fast lap."];
+const sampleComments:string[]=[];
 
 function formatDuration(seconds:number|null){
   if(seconds===null||!Number.isFinite(seconds))return "—";
@@ -36,15 +36,21 @@ export default function Home(){
   useEffect(()=>{const timer=window.setInterval(()=>setNow(Date.now()),1000);return()=>window.clearInterval(timer)},[]);
 
   const results=feed.results;
+  const eventStart=new Date(event.date).getTime();
+  const preRace=now<eventStart;
   const active=results.filter(row=>row.status==="on_course");
-  const currentYard=feed.summary?.currentYard||Math.max(1,...active.map(row=>row.currentYard));
-  const stillIn=feed.summary?.stillIn??active.length;
-  const totalDistance=feed.summary?.teamDistanceKm??results.reduce((sum,row)=>sum+row.yardsCompleted*event.distance,0);
-  const averageLap=feed.summary?.averageLapSeconds??null;
-  const averageRest=feed.summary?.averageRestSeconds??null;
+  const currentYard=preRace?0:(feed.summary?.currentYard??Math.max(0,...active.map(row=>row.currentYard)));
+  const stillIn=preRace?0:(feed.summary?.stillIn??active.length);
+  const totalDistance=preRace?0:(feed.summary?.teamDistanceKm??results.reduce((sum,row)=>sum+row.yardsCompleted*event.distance,0));
+  const averageLap=preRace?0:(feed.summary?.averageLapSeconds??null);
+  const averageRest=preRace?0:(feed.summary?.averageRestSeconds??null);
+  const startSeconds=Math.max(0,Math.ceil((eventStart-now)/1000));
+  const startHours=Math.floor(startSeconds/3600);
+  const startCountdown=`${String(startHours).padStart(3,"0")}:${String(Math.floor((startSeconds%3600)/60)).padStart(2,"0")}:${String(startSeconds%60).padStart(2,"0")}`;
   const nextBellAt=new Date(Math.ceil((now+1)/3600000)*3600000);
   const nextBell=Math.max(0,Math.ceil((nextBellAt.getTime()-now)/1000));
   const nextBellLabel=nextBellAt.toLocaleTimeString("en-SG",{hour:"2-digit",minute:"2-digit",hour12:false,timeZone:"Asia/Singapore"});
+  const tickerText=preRace?`FIRST BELL · ${event.dateLabel} · ${event.startLabel} · ${event.venue}`:(feed.comments?.length?feed.comments:sampleComments).join("  ·  ");
 
   const ordered=useMemo(()=>results.filter(row=>{
     return filter==="all"||row.status===filter;
@@ -64,15 +70,11 @@ export default function Home(){
   return <main>
     <header className="topbar">
       <a className="wordmark" href="#top" aria-label="Beach Backyard Ultra home"><img src="/bbu-wordmark.png" alt="Beach Backyard Ultra"/><b>TEAM SINGAPORE</b></a>
-      <nav className="category-switch" aria-label="Race coverage">
-        <a className="active" href="/">TEAM</a>
-        <a href="/open">OPEN CATEGORY</a>
-      </nav>
       <a className="stream" href="#athletes">VIEW STANDINGS <span>↓</span></a>
     </header>
 
     <aside className="yard-ticker" aria-label="Overheard on the Yard">
-      <b>OVERHEARD ON THE YARD</b><div><span>{(feed.comments?.length?feed.comments:sampleComments).join("  ·  ")}</span></div>
+      <b>{preRace?"RACE COUNTDOWN":"OVERHEARD ON THE YARD"}</b><div><span>{tickerText}</span></div>
     </aside>
 
     <section className="coverage-hero" id="top">
@@ -80,11 +82,11 @@ export default function Home(){
         <div className="athlete-reel-track">{[0,1].map(group=><div className="athlete-reel-set" aria-hidden={group===1} key={group}>{team.map(runner=><article className="reel-athlete" key={`${group}-${runner.number}`}><div className="reel-photo" style={{backgroundImage:`url("${runner.photo}")`,backgroundPosition:runner.photoPosition}}/><div className="reel-name"><span>SGP · {String(runner.number).padStart(2,"0")}</span><b>{runner.name}</b></div></article>)}</div>)}</div>
         <figcaption><div><span>{event.dateLabel} · PUNGGOL, SINGAPORE</span><h1>JUST ONE<br/>MORE <em>YARD.</em></h1></div></figcaption>
       </figure>
-      <div className="yard-display"><span>CURRENT YARD</span><strong>{String(currentYard).padStart(2,"0")}</strong><div className="bell-time"><small>NEXT BELL · SINGAPORE</small><b>{nextBellLabel}</b><em>{String(Math.floor(nextBell/60)).padStart(2,"0")}:{String(nextBell%60).padStart(2,"0")} TO GO</em></div></div>
+      <div className="yard-display"><span>CURRENT YARD</span><strong>{String(currentYard).padStart(2,"0")}</strong><div className={`bell-time${preRace?" pre-race":""}`}><small>{preRace?"RACE STARTS IN":"NEXT BELL · SINGAPORE"}</small><b>{preRace?startCountdown:nextBellLabel}</b><em>{preRace?"HOURS · MINUTES · SECONDS":`${String(Math.floor(nextBell/60)).padStart(2,"0")}:${String(nextBell%60).padStart(2,"0")} TO GO`}</em></div></div>
     </section>
 
     <section className="live-kpis" id="live">
-      <article><small>STILL IN</small><b>{stillIn}<i>/15</i></b><span>{stillIn} runners active</span></article>
+      <article><small>STILL IN</small><b>{stillIn}<i>/15</i></b><span>{preRace?"Awaiting first bell":`${stillIn} runners active`}</span></article>
       <article><small>TEAM DISTANCE</small><b>{totalDistance.toFixed(1)}<i>KM</i></b><span>Spreadsheet team total</span></article>
       <article><small>AVERAGE LAP</small><b>{formatDuration(averageLap)}</b><span>Active-field sheet average</span></article>
       <article><small>AVERAGE REST</small><b>{formatDuration(averageRest)}</b><span>Active-field sheet average</span></article>
@@ -101,13 +103,13 @@ export default function Home(){
 
     <section className="standings" id="athletes">
       <header><div><p>TEAM SINGAPORE / LIVE ORDER</p><h2>EVERY<br/><span>RUNNER.</span></h2></div></header>
-      <div className="filter-row">{(["all","on_course","out"] as Filter[]).map(value=><button className={filter===value?"active":""} onClick={()=>setFilter(value)} key={value}>{value==="all"?`ALL ${results.length}`:`${statusLabel(value as RunnerStatus)} ${results.filter(row=>row.status===value).length}`}</button>)}</div>
+      <div className="filter-row">{(["all","on_course","out"] as Filter[]).map(value=><button className={filter===value?"active":""} onClick={()=>setFilter(value)} key={value}>{value==="all"?`ALL ${results.length}`:value==="out"&&preRace?`NOT STARTED ${results.length}`:`${statusLabel(value as RunnerStatus)} ${results.filter(row=>row.status===value).length}`}</button>)}</div>
       <div className="results-table-wrap"><table className="results-table">
         <thead><tr><th><button onClick={()=>chooseSort("standing")}># / STATUS</button></th><th><button onClick={()=>chooseSort("name")}>ATHLETE</button></th><th><button onClick={()=>chooseSort("yards")}>YARDS</button></th><th>DISTANCE</th><th><button onClick={()=>chooseSort("last")}>LAST LAP</button></th><th><button onClick={()=>chooseSort("average")}>AVG LAP</button></th><th><button onClick={()=>chooseSort("rest")}>REST / YARD</button></th><th>CURRENT</th></tr></thead>
-        <tbody>{ordered.map((runner,index)=>{const athlete=team.find(item=>item.number===runner.bib);return <tr className={runner.status} key={runner.athleteId}>
-          <td><div className="status-cell"><span className="standing-number">{String(index+1).padStart(2,"0")}</span><i className="status-light"/><small>{runner.statusLabel||statusLabel(runner.status)}</small></div></td>
+        <tbody>{ordered.map((runner,index)=>{const athlete=team.find(item=>item.number===runner.bib);const displayStatus=preRace?"NOT STARTED":runner.statusLabel||statusLabel(runner.status);return <tr className={runner.status} key={runner.athleteId}>
+          <td><div className="status-cell"><span className="standing-number">{String(index+1).padStart(2,"0")}</span><i className="status-light"/><small>{displayStatus}</small></div></td>
           <td><div className="athlete-cell"><div className="table-athlete" style={{backgroundImage:`url("${athlete?.photo}")`,backgroundPosition:athlete?.photoPosition}}/><div className="athlete-meta"><b>{runner.name}</b><span>SGP · #{String(runner.bib).padStart(2,"0")}</span></div></div></td>
-          <td><strong>{runner.yardsCompleted}</strong></td><td>{(runner.yardsCompleted*event.distance).toFixed(1)} <small>KM</small></td><td>{formatDuration(runner.lastLapSeconds)}</td><td>{formatDuration(runner.averageLapSeconds)}</td><td className="rest-value">{formatDuration(runner.averageLapSeconds===null?null:3600-runner.averageLapSeconds)}</td><td>{runner.status==="on_course"&&runner.progress>0?<span className="progress-cell"><i><u style={{width:`${runner.progress}%`}}/></i>{Math.round(runner.progress)}%</span>:<span className={`current-pill ${runner.status}`}>{runner.status==="on_course"?"RUNNING":"OUT"}</span>}</td>
+          <td><strong>{preRace?0:runner.yardsCompleted}</strong></td><td>{(preRace?0:runner.yardsCompleted*event.distance).toFixed(1)} <small>KM</small></td><td>{formatDuration(preRace?0:runner.lastLapSeconds)}</td><td>{formatDuration(preRace?0:runner.averageLapSeconds)}</td><td className="rest-value">{formatDuration(preRace?0:runner.averageLapSeconds===null?null:3600-runner.averageLapSeconds)}</td><td>{!preRace&&runner.status==="on_course"&&runner.progress>0?<span className="progress-cell"><i><u style={{width:`${runner.progress}%`}}/></i>{Math.round(runner.progress)}%</span>:<span className={`current-pill ${runner.status}`}>{preRace?"WAITING":runner.status==="on_course"?"RUNNING":"OUT"}</span>}</td>
         </tr>})}</tbody>
       </table></div>
       <p className="table-note">Default order: active athletes first, then most completed yards, then fastest average lap. Tap any underlined heading to reorder.</p>

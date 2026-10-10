@@ -24,21 +24,21 @@ export type LiveSummary = {
 };
 
 const samples: Array<[string,number,string,string,number,number,string,string,number,string,string]> = [
-  ["SGP-001",1,"Joshua Toh","On course",8,9,"46:18","47:04",72,"2026-10-18T04:08:00+08:00",""],
-  ["SGP-002",2,"Nguyen Dang Trung","In corral",8,9,"44:52","46:31",100,"2026-10-18T04:05:00+08:00","Ready for next bell"],
-  ["SGP-003",3,"Ned Phillips","On course",8,9,"48:07","47:42",68,"2026-10-18T04:08:00+08:00",""],
-  ["SGP-004",4,"Chris Timms","On course",8,9,"49:12","48:16",61,"2026-10-18T04:08:00+08:00",""],
-  ["SGP-005",5,"Andrey Kolbasov","In corral",8,9,"45:44","46:58",100,"2026-10-18T04:06:00+08:00",""],
-  ["SGP-006",6,"Khoo Houw Ann","On course",8,9,"50:26","49:18",55,"2026-10-18T04:08:00+08:00",""],
-  ["SGP-007",7,"Sophia Yee","On course",8,9,"47:55","48:03",65,"2026-10-18T04:08:00+08:00",""],
-  ["SGP-008",8,"Kanishk Karan","On course",8,9,"51:10","49:46",49,"2026-10-18T04:08:00+08:00",""],
-  ["SGP-009",9,"Zenton Yarm","In corral",8,9,"43:58","45:39",100,"2026-10-18T04:04:00+08:00",""],
-  ["SGP-010",10,"Lem Chee Ng","Out",6,7,"58:41","52:22",100,"2026-10-18T02:58:41+08:00","Stopped after yard 6"],
-  ["SGP-011",11,"Glenn Lee","On course",8,9,"48:38","47:51",63,"2026-10-18T04:08:00+08:00",""],
-  ["SGP-012",12,"Lee Kok Cheu","On course",8,9,"52:03","50:12",46,"2026-10-18T04:08:00+08:00",""],
-  ["SGP-013",13,"Leong Foo Fatt","Out",7,8,"59:21","53:08",100,"2026-10-18T03:59:21+08:00","Stopped after yard 7"],
-  ["SGP-014",14,"Quek Kok Kwang","On course",8,9,"49:44","48:55",57,"2026-10-18T04:08:00+08:00",""],
-  ["SGP-015",15,"Tan Qi Wei","Out",5,6,"57:32","51:47",100,"2026-10-18T01:57:32+08:00","Stopped after yard 5"],
+  ["SGP-001",1,"Joshua Toh","DNS",0,0,"","",0,"2026-10-17T20:00:00+08:00",""],
+  ["SGP-002",2,"Nguyen Dang Trung","DNS",0,0,"","",0,"2026-10-17T20:00:00+08:00",""],
+  ["SGP-003",3,"Wang Jian Jason","DNS",0,0,"","",0,"2026-10-17T20:00:00+08:00",""],
+  ["SGP-004",4,"Chris Timms","DNS",0,0,"","",0,"2026-10-17T20:00:00+08:00",""],
+  ["SGP-005",5,"Andrey Kolbasov","DNS",0,0,"","",0,"2026-10-17T20:00:00+08:00",""],
+  ["SGP-006",6,"Khoo Houw Ann","DNS",0,0,"","",0,"2026-10-17T20:00:00+08:00",""],
+  ["SGP-007",7,"Sophia Yee","DNS",0,0,"","",0,"2026-10-17T20:00:00+08:00",""],
+  ["SGP-008",8,"Kanishk Karan","DNS",0,0,"","",0,"2026-10-17T20:00:00+08:00",""],
+  ["SGP-009",9,"Zenton Yarm","DNS",0,0,"","",0,"2026-10-17T20:00:00+08:00",""],
+  ["SGP-010",10,"Lem Chee Ng","DNS",0,0,"","",0,"2026-10-17T20:00:00+08:00",""],
+  ["SGP-011",11,"Glenn Lee","DNS",0,0,"","",0,"2026-10-17T20:00:00+08:00",""],
+  ["SGP-012",12,"Lee Kok Cheu","DNS",0,0,"","",0,"2026-10-17T20:00:00+08:00",""],
+  ["SGP-013",13,"Leong Foo Fatt","DNS",0,0,"","",0,"2026-10-17T20:00:00+08:00",""],
+  ["SGP-014",14,"Quek Kok Kwang","DNS",0,0,"","",0,"2026-10-17T20:00:00+08:00",""],
+  ["SGP-015",15,"Tan Qi Wei","DNS",0,0,"","",0,"2026-10-17T20:00:00+08:00",""],
 ];
 
 export const sampleResults: LiveResult[] = samples.map(([athleteId,bib,name,status,yardsCompleted,currentYard,lastLap,averageLap,progress,updatedAt,note]) => ({
