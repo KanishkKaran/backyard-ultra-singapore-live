@@ -42,10 +42,10 @@ export default function Home(){
   const active=results.filter(row=>row.status==="on_course");
   const scheduledYard=preRace?0:Math.floor((now-eventStart)/3600000)+1;
   const currentYard=preRace?0:Math.max(scheduledYard,feed.summary?.currentYard??Math.max(0,...active.map(row=>row.currentYard)));
-  const stillIn=preRace?0:(feed.summary?.stillIn??active.length);
-  const totalDistance=preRace?0:(feed.summary?.teamDistanceKm??results.reduce((sum,row)=>sum+row.yardsCompleted*event.distance,0));
-  const averageLap=preRace?0:(feed.summary?.averageLapSeconds??null);
-  const averageRest=preRace?0:(feed.summary?.averageRestSeconds??null);
+  const stillIn=feed.summary?.stillIn??active.length;
+  const totalDistance=feed.summary?.teamDistanceKm??results.reduce((sum,row)=>sum+row.yardsCompleted*event.distance,0);
+  const averageLap=feed.summary?.averageLapSeconds??null;
+  const averageRest=feed.summary?.averageRestSeconds??null;
   const startSeconds=Math.max(0,Math.ceil((eventStart-now)/1000));
   const startDays=Math.floor(startSeconds/86400);
   const startHours=Math.floor((startSeconds%86400)/3600);
@@ -102,10 +102,10 @@ export default function Home(){
     </section>
 
     <section className="live-kpis" id="live">
-      <article><small>STILL IN</small><b>{stillIn}<i>/15</i></b><span>{preRace?"Awaiting first bell":`${stillIn} runners active`}</span></article>
-      <article><small>TEAM DISTANCE</small><b>{totalDistance.toFixed(1)}<i>KM</i></b><span>Spreadsheet team total</span></article>
-      <article><small>AVERAGE LAP</small><b>{formatDuration(averageLap)}</b><span>Active-field sheet average</span></article>
-      <article><small>AVERAGE REST</small><b>{formatDuration(averageRest)}</b><span>Active-field sheet average</span></article>
+      <article><small>STILL IN</small><b>{stillIn}<i>/15</i></b><span>{stillIn} runners active</span></article>
+      <article><small>TEAM DISTANCE</small><b>{totalDistance.toFixed(1)}<i>KM</i></b><span>Calculated from Lap Log</span></article>
+      <article><small>AVERAGE LAP</small><b>{formatDuration(averageLap)}</b><span>Calculated from Lap Log</span></article>
+      <article><small>AVERAGE REST</small><b>{formatDuration(averageRest)}</b><span>Calculated from Lap Log</span></article>
     </section>
     <div className="sync-strip"><b>{feed.source==="spreadsheet"?"● LIVE DATA CONNECTED":"● TEST DATA"}</b><span>LAST SYNC {new Date(feed.polledAt).toLocaleTimeString("en-SG",{hour:"2-digit",minute:"2-digit",second:"2-digit"})} SGT · REFRESHES EVERY 20 SECONDS</span></div>
 
@@ -119,13 +119,13 @@ export default function Home(){
 
     <section className="standings" id="athletes">
       <header><div><p>TEAM SINGAPORE / LIVE ORDER</p><h2>EVERY<br/><span>RUNNER.</span></h2></div></header>
-      <div className="filter-row">{(["all","on_course","out"] as Filter[]).map(value=><button className={filter===value?"active":""} onClick={()=>setFilter(value)} key={value}>{value==="all"?`ALL ${results.length}`:value==="out"&&preRace?`NOT STARTED ${results.length}`:`${statusLabel(value as RunnerStatus)} ${results.filter(row=>row.status===value).length}`}</button>)}</div>
+      <div className="filter-row">{(["all","on_course","out"] as Filter[]).map(value=><button className={filter===value?"active":""} onClick={()=>setFilter(value)} key={value}>{value==="all"?`ALL ${results.length}`:`${statusLabel(value as RunnerStatus)} ${results.filter(row=>row.status===value).length}`}</button>)}</div>
       <div className="results-table-wrap"><table className="results-table">
         <thead><tr><th><button onClick={()=>chooseSort("standing")}># / STATUS</button></th><th><button onClick={()=>chooseSort("name")}>ATHLETE</button></th><th><button onClick={()=>chooseSort("yards")}>YARDS</button></th><th>DISTANCE</th><th><button onClick={()=>chooseSort("last")}>LAST LAP</button></th><th><button onClick={()=>chooseSort("average")}>AVG LAP</button></th><th><button onClick={()=>chooseSort("rest")}>REST / YARD</button></th><th>CURRENT</th></tr></thead>
-        <tbody>{ordered.map((runner,index)=>{const athlete=team.find(item=>item.number===runner.bib);const displayStatus=preRace?"NOT STARTED":runner.statusLabel||statusLabel(runner.status);const laps=runner.laps??[];return <Fragment key={runner.athleteId}><tr className={runner.status}>
+        <tbody>{ordered.map((runner,index)=>{const athlete=team.find(item=>item.number===runner.bib);const displayStatus=runner.statusLabel||statusLabel(runner.status);const laps=runner.laps??[];return <Fragment key={runner.athleteId}><tr className={runner.status}>
           <td><div className="status-cell"><span className="standing-number">{String(index+1).padStart(2,"0")}</span><i className="status-light"/><small>{displayStatus}</small></div></td>
           <td><div className="athlete-cell"><div className="table-athlete" style={{backgroundImage:`url("${athlete?.photo}")`,backgroundPosition:athlete?.photoPosition}}/><div className="athlete-meta"><b>{runner.name}</b><span>SGP · #{String(runner.bib).padStart(2,"0")}</span><button className="lap-history-button" disabled={!laps.length} onClick={()=>setExpandedBib(value=>value===runner.bib?null:runner.bib)}>{laps.length?`${expandedBib===runner.bib?"HIDE":"VIEW"} ${laps.length} LAP${laps.length===1?"":"S"}`:"NO LAPS YET"}</button></div></div></td>
-          <td><strong>{preRace?0:runner.yardsCompleted}</strong></td><td>{(preRace?0:runner.yardsCompleted*event.distance).toFixed(1)} <small>KM</small></td><td>{formatDuration(preRace?0:runner.lastLapSeconds)}</td><td>{formatDuration(preRace?0:runner.averageLapSeconds)}</td><td className="rest-value">{formatDuration(preRace?0:runner.averageLapSeconds===null?null:3600-runner.averageLapSeconds)}</td><td>{!preRace&&runner.status==="on_course"&&runner.progress>0?<span className="progress-cell"><i><u style={{width:`${runner.progress}%`}}/></i>{Math.round(runner.progress)}%</span>:<span className={`current-pill ${runner.status}`}>{preRace?"WAITING":runner.status==="on_course"?"RUNNING":"OUT"}</span>}</td>
+          <td><strong>{runner.yardsCompleted}</strong></td><td>{(runner.yardsCompleted*event.distance).toFixed(1)} <small>KM</small></td><td>{formatDuration(runner.lastLapSeconds)}</td><td>{formatDuration(runner.averageLapSeconds)}</td><td className="rest-value">{formatDuration(runner.averageLapSeconds===null?null:3600-runner.averageLapSeconds)}</td><td>{!preRace&&runner.status==="on_course"&&runner.progress>0?<span className="progress-cell"><i><u style={{width:`${runner.progress}%`}}/></i>{Math.round(runner.progress)}%</span>:<span className={`current-pill ${runner.status}`}>{preRace?"WAITING":runner.status==="on_course"?"RUNNING":"OUT"}</span>}</td>
         </tr>{expandedBib===runner.bib&&laps.length>0?<tr className="lap-history-row"><td colSpan={8}><div className="lap-history"><b>{runner.name} · LAP HISTORY</b><div>{laps.map(lap=><span key={lap.yard}><small>YARD {String(lap.yard).padStart(2,"0")}</small><strong>{formatDuration(lap.seconds)}</strong></span>)}</div></div></td></tr>:null}</Fragment>})}</tbody>
       </table></div>
       <p className="table-note">Default order: active athletes first, then most completed yards, then fastest average lap. Tap any underlined heading to reorder.</p>
