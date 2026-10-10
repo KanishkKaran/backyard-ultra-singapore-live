@@ -1,6 +1,6 @@
 "use client";
 
-import {useEffect,useMemo,useState} from "react";
+import {Fragment,useEffect,useMemo,useState} from "react";
 import {event,team} from "../lib/race-data";
 import {sampleResults,summarizeResults} from "../lib/live-results";
 import type {LiveResult,LiveSummary,RunnerStatus} from "../lib/live-results";
@@ -26,6 +26,7 @@ export default function Home(){
   const [filter,setFilter]=useState<Filter>("all");
   const [sortKey,setSortKey]=useState<SortKey>("standing");
   const [sortDirection,setSortDirection]=useState<"asc"|"desc">("asc");
+  const [expandedBib,setExpandedBib]=useState<number|null>(null);
   const [now,setNow]=useState(Date.now());
 
   useEffect(()=>{
@@ -121,11 +122,11 @@ export default function Home(){
       <div className="filter-row">{(["all","on_course","out"] as Filter[]).map(value=><button className={filter===value?"active":""} onClick={()=>setFilter(value)} key={value}>{value==="all"?`ALL ${results.length}`:value==="out"&&preRace?`NOT STARTED ${results.length}`:`${statusLabel(value as RunnerStatus)} ${results.filter(row=>row.status===value).length}`}</button>)}</div>
       <div className="results-table-wrap"><table className="results-table">
         <thead><tr><th><button onClick={()=>chooseSort("standing")}># / STATUS</button></th><th><button onClick={()=>chooseSort("name")}>ATHLETE</button></th><th><button onClick={()=>chooseSort("yards")}>YARDS</button></th><th>DISTANCE</th><th><button onClick={()=>chooseSort("last")}>LAST LAP</button></th><th><button onClick={()=>chooseSort("average")}>AVG LAP</button></th><th><button onClick={()=>chooseSort("rest")}>REST / YARD</button></th><th>CURRENT</th></tr></thead>
-        <tbody>{ordered.map((runner,index)=>{const athlete=team.find(item=>item.number===runner.bib);const displayStatus=preRace?"NOT STARTED":runner.statusLabel||statusLabel(runner.status);return <tr className={runner.status} key={runner.athleteId}>
+        <tbody>{ordered.map((runner,index)=>{const athlete=team.find(item=>item.number===runner.bib);const displayStatus=preRace?"NOT STARTED":runner.statusLabel||statusLabel(runner.status);const laps=runner.laps??[];return <Fragment key={runner.athleteId}><tr className={runner.status}>
           <td><div className="status-cell"><span className="standing-number">{String(index+1).padStart(2,"0")}</span><i className="status-light"/><small>{displayStatus}</small></div></td>
-          <td><div className="athlete-cell"><div className="table-athlete" style={{backgroundImage:`url("${athlete?.photo}")`,backgroundPosition:athlete?.photoPosition}}/><div className="athlete-meta"><b>{runner.name}</b><span>SGP · #{String(runner.bib).padStart(2,"0")}</span></div></div></td>
+          <td><div className="athlete-cell"><div className="table-athlete" style={{backgroundImage:`url("${athlete?.photo}")`,backgroundPosition:athlete?.photoPosition}}/><div className="athlete-meta"><b>{runner.name}</b><span>SGP · #{String(runner.bib).padStart(2,"0")}</span><button className="lap-history-button" disabled={!laps.length} onClick={()=>setExpandedBib(value=>value===runner.bib?null:runner.bib)}>{laps.length?`${expandedBib===runner.bib?"HIDE":"VIEW"} ${laps.length} LAP${laps.length===1?"":"S"}`:"NO LAPS YET"}</button></div></div></td>
           <td><strong>{preRace?0:runner.yardsCompleted}</strong></td><td>{(preRace?0:runner.yardsCompleted*event.distance).toFixed(1)} <small>KM</small></td><td>{formatDuration(preRace?0:runner.lastLapSeconds)}</td><td>{formatDuration(preRace?0:runner.averageLapSeconds)}</td><td className="rest-value">{formatDuration(preRace?0:runner.averageLapSeconds===null?null:3600-runner.averageLapSeconds)}</td><td>{!preRace&&runner.status==="on_course"&&runner.progress>0?<span className="progress-cell"><i><u style={{width:`${runner.progress}%`}}/></i>{Math.round(runner.progress)}%</span>:<span className={`current-pill ${runner.status}`}>{preRace?"WAITING":runner.status==="on_course"?"RUNNING":"OUT"}</span>}</td>
-        </tr>})}</tbody>
+        </tr>{expandedBib===runner.bib&&laps.length>0?<tr className="lap-history-row"><td colSpan={8}><div className="lap-history"><b>{runner.name} · LAP HISTORY</b><div>{laps.map(lap=><span key={lap.yard}><small>YARD {String(lap.yard).padStart(2,"0")}</small><strong>{formatDuration(lap.seconds)}</strong></span>)}</div></div></td></tr>:null}</Fragment>})}</tbody>
       </table></div>
       <p className="table-note">Default order: active athletes first, then most completed yards, then fastest average lap. Tap any underlined heading to reorder.</p>
     </section>
