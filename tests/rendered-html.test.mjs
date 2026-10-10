@@ -31,5 +31,7 @@ test("renders the public live tracker shell", async () => {
   assert.match(html, /PACE-BASED/);
   assert.match(html, /WAO START \+ FINISH/);
   assert.match(html, /Wang Jian Jason/);
+  assert.match(html, /Beach Backyard Ultra presented by Optimum Nutrition/);
+  assert.doesNotMatch(html, /Moving gallery of the fifteen Team Singapore runners/);
   assert.doesNotMatch(html, /OPEN CATEGORY/);
 });

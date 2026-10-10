@@ -39,14 +39,17 @@ export default function Home(){
   const eventStart=new Date(event.date).getTime();
   const preRace=now<eventStart;
   const active=results.filter(row=>row.status==="on_course");
-  const currentYard=preRace?0:(feed.summary?.currentYard??Math.max(0,...active.map(row=>row.currentYard)));
+  const scheduledYard=preRace?0:Math.floor((now-eventStart)/3600000)+1;
+  const currentYard=preRace?0:Math.max(scheduledYard,feed.summary?.currentYard??Math.max(0,...active.map(row=>row.currentYard)));
   const stillIn=preRace?0:(feed.summary?.stillIn??active.length);
   const totalDistance=preRace?0:(feed.summary?.teamDistanceKm??results.reduce((sum,row)=>sum+row.yardsCompleted*event.distance,0));
   const averageLap=preRace?0:(feed.summary?.averageLapSeconds??null);
   const averageRest=preRace?0:(feed.summary?.averageRestSeconds??null);
   const startSeconds=Math.max(0,Math.ceil((eventStart-now)/1000));
-  const startHours=Math.floor(startSeconds/3600);
-  const startCountdown=`${String(startHours).padStart(3,"0")}:${String(Math.floor((startSeconds%3600)/60)).padStart(2,"0")}:${String(startSeconds%60).padStart(2,"0")}`;
+  const startDays=Math.floor(startSeconds/86400);
+  const startHours=Math.floor((startSeconds%86400)/3600);
+  const startMinutes=Math.floor((startSeconds%3600)/60);
+  const startSecondsPart=startSeconds%60;
   const nextBellAt=new Date(Math.ceil((now+1)/3600000)*3600000);
   const nextBell=Math.max(0,Math.ceil((nextBellAt.getTime()-now)/1000));
   const nextBellLabel=nextBellAt.toLocaleTimeString("en-SG",{hour:"2-digit",minute:"2-digit",hour12:false,timeZone:"Asia/Singapore"});
@@ -69,7 +72,7 @@ export default function Home(){
 
   return <main>
     <header className="topbar">
-      <a className="wordmark" href="#top" aria-label="Beach Backyard Ultra home"><img src="/bbu-wordmark.png" alt="Beach Backyard Ultra"/><b>TEAM SINGAPORE</b></a>
+      <a className="wordmark" href="#top" aria-label="Beach Backyard Ultra home"><span>BEACH BACKYARD ULTRA</span><b>TEAM SINGAPORE</b></a>
       <a className="stream" href="#athletes">VIEW STANDINGS <span>↓</span></a>
     </header>
 
@@ -77,12 +80,24 @@ export default function Home(){
       <b>{preRace?"RACE COUNTDOWN":"OVERHEARD ON THE YARD"}</b><div><span>{tickerText}</span></div>
     </aside>
 
-    <section className="coverage-hero" id="top">
-      <figure className="campaign-art" aria-label="Moving gallery of the fifteen Team Singapore runners">
-        <div className="athlete-reel-track">{[0,1].map(group=><div className="athlete-reel-set" aria-hidden={group===1} key={group}>{team.map(runner=><article className="reel-athlete" key={`${group}-${runner.number}`}><div className="reel-photo" style={{backgroundImage:`url("${runner.photo}")`,backgroundPosition:runner.photoPosition}}/><div className="reel-name"><span>SGP · {String(runner.number).padStart(2,"0")}</span><b>{runner.name}</b></div></article>)}</div>)}</div>
-        <figcaption><div><span>{event.dateLabel} · PUNGGOL, SINGAPORE</span><h1>JUST ONE<br/>MORE <em>YARD.</em></h1></div></figcaption>
-      </figure>
-      <div className="yard-display"><span>CURRENT YARD</span><strong>{String(currentYard).padStart(2,"0")}</strong><div className={`bell-time${preRace?" pre-race":""}`}><small>{preRace?"RACE STARTS IN":"NEXT BELL · SINGAPORE"}</small><b>{preRace?startCountdown:nextBellLabel}</b><em>{preRace?"HOURS · MINUTES · SECONDS":`${String(Math.floor(nextBell/60)).padStart(2,"0")}:${String(nextBell%60).padStart(2,"0")} TO GO`}</em></div></div>
+    <section className={`coverage-hero ${preRace?"pre-race":"race-live"}`} id="top">
+      <article className="sponsor-lockup">
+        <small>TITLE SPONSOR</small>
+        <img src="/bbuxon-title-sponsor.webp" alt="Beach Backyard Ultra presented by Optimum Nutrition"/>
+        <p>WORLD SATELLITE TEAM CHAMPIONSHIPS<br/>{event.dateLabel} · PUNGGOL, SINGAPORE</p>
+      </article>
+      {preRace?<section className="start-panel" aria-label="Countdown to the first bell">
+        <p>COUNTDOWN TO THE FIRST BELL</p>
+        <h1>RACE STARTS IN</h1>
+        <span>{event.venue} · START + FINISH</span>
+        <div className="countdown-grid">
+          <article><b>{String(startDays).padStart(2,"0")}</b><small>DAYS</small></article>
+          <article><b>{String(startHours).padStart(2,"0")}</b><small>HOURS</small></article>
+          <article><b>{String(startMinutes).padStart(2,"0")}</b><small>MINUTES</small></article>
+          <article><b>{String(startSecondsPart).padStart(2,"0")}</b><small>SECONDS</small></article>
+        </div>
+        <div className="yard-locked"><i/> CURRENT YARD WILL APPEAR HERE ONLY AFTER 20:00 SGT</div>
+      </section>:<div className="yard-display"><span>CURRENT YARD</span><strong>{String(currentYard).padStart(2,"0")}</strong><div className="bell-time"><small>NEXT BELL · SINGAPORE</small><b>{nextBellLabel}</b><em>{String(Math.floor(nextBell/60)).padStart(2,"0")}:{String(nextBell%60).padStart(2,"0")} TO GO</em></div></div>}
     </section>
 
     <section className="live-kpis" id="live">
